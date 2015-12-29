@@ -11,6 +11,7 @@ use super::chars::is_whitespace;
 use super::chars::is_printable;
 use super::chars::is_tag_char;
 use super::chars::is_flow_indicator;
+use super::chars::is_alias_end_indicator;
 use super::errors::Error;
 use self::TokenType::*;
 
@@ -594,7 +595,7 @@ impl<'a, 'b> Tokenizer<'a, 'b> {
                 Some((start, '*')) => {
                     loop {
                         match self.iter.next_value {
-                            Some((_, ch)) if is_whitespace(ch) => break,
+                            Some((_, ch)) if is_alias_end_indicator(ch) => break,
                             None => break,
                             _ => {}
                         }
@@ -1112,6 +1113,12 @@ fn test_alias() {
         vec!((Alias, "*abc")));
     assert_eq!(simple_tokens(test_tokenize("*a b")),
         vec!((Alias, "*a"), (Whitespace, " "), (PlainString, "b")));
+    assert_eq!(simple_tokens(test_tokenize("*a, *b")),
+        vec!((Alias, "*a"), (FlowEntry, ","), (Whitespace, " "), (Alias, "*b")));
+    assert_eq!(simple_tokens(test_tokenize("[*a, *b]")),
+        vec!((FlowSeqStart, "["),
+             (Alias, "*a"), (FlowEntry, ","), (Whitespace, " "), (Alias, "*b"),
+             (FlowSeqEnd, "]")));
     let err = test_tokenize("*a[]").err().unwrap();
     assert_eq!(&format!("{}", err), "<inline_test>:1:3: \
         Tokenizer Error: Bad char in alias name");
