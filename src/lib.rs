@@ -56,4 +56,5 @@ mod sky;
 pub mod ast;
 pub mod validate;
 #[cfg(test)] mod test_errors;
+#[cfg(test)] mod test_parser;
 #[cfg(test)] mod test_transcode;

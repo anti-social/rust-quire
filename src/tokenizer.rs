@@ -69,7 +69,7 @@ quick_error! {
 }
 
 /// Source code position
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Pos {
     pub filename: Rc<String>,
     pub indent: usize,
@@ -88,7 +88,7 @@ impl Display for Pos {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token<'tok> {
     pub kind: TokenType,
     pub start: Pos,

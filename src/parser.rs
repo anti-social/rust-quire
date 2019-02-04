@@ -235,10 +235,10 @@ fn plain_value<'a>(tok: &Token<'a>) -> Result<String, Error> {
     return Ok(res);
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Directive<'a>(&'a Token<'a>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Document<'a> {
     pub directives: Vec<Directive<'a>>,
     pub root: Node<'a>,
@@ -349,10 +349,11 @@ fn parse_map<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>,
         let ktoken = tokiter.peek(0);
         let key = match ktoken.kind {
             T::Eof => break,
-            T::DocumentEnd => break,
+            T::DocumentEnd | T::DocumentStart => break,
             T::Unindent => break,
             T::PlainString | T::SingleString | T::DoubleString
             => Scalar(None, None, plain_value(ktoken)?, ktoken),
+            // TODO(anti-social): Support multi documents
             _ => return Err(Error::parse_error(&ktoken.start,
                 format!("Expected mapping key or unindent, got {:?}",
                         ktoken.kind))),
@@ -702,12 +703,25 @@ fn _parse_node<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>)
     };
     if result.is_ok() && indent {
         let end = tokiter.peek(0);
-        if end.kind != T::Unindent {
-            return Err(Error::parse_error(&end.start,
-                format!("Expected unindent, got {:?}", end.kind)));
-        } else {
-            tokiter.next();
+        dbg!(end);
+        match end.kind {
+            T::Unindent => {
+                tokiter.next();
+            },
+            T::DocumentStart => {},
+            _ => {
+                // TODO(anti-social): Support multi documents
+                return Err(Error::parse_error(&end.start,
+                                              format!("Expected unindent, got {:?}", end.kind)));
+            }
         }
+//        if end.kind != T::Unindent {
+//            // TODO(anti-social): Support multi documents
+//            return Err(Error::parse_error(&end.start,
+//                format!("Expected unindent, got {:?}", end.kind)));
+//        } else {
+//            tokiter.next();
+//        }
     }
     return result;
 }
@@ -740,7 +754,7 @@ fn parse_root<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>)
             None => break,
         };
         match tok.kind {
-            T::DocumentEnd => break,
+            T::DocumentEnd | T::DocumentStart => break,
             _ => {
                 return Err(Error::parse_error(&tok.start,
                     format!("Expected document end, got {:?}", tok.kind)));
@@ -780,3 +794,15 @@ pub fn parse<T, F>(name: Rc<String>, data: &str, process: F)
     };
     return Ok(process(doc));
 }
+
+//pub fn parse_many<T>(name: Rc<String>, data: &str, process: F)
+//    -> Result<Vec<T>, Error>
+//    where F: Fn(Document) -> T
+//{
+//    let tokens = tokenize(name, data).map_err(Error::tokenizer_error)?;
+//    let doc = match parse_tokens(&tokens) {
+//        Ok(doc) => doc,
+//        Err(e) => return Err(e),
+//    };
+//    return Ok(process(doc));
+//}
