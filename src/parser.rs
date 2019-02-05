@@ -23,12 +23,12 @@ pub struct TokenIter<'a> {
 }
 
 impl<'a> TokenIter<'a> {
-    fn new<'x>(src: &'x Vec<Token<'x>>) -> TokenIter<'x> {
+    fn new<'x>(src: &'x [Token<'x>]) -> TokenIter<'x> {
         let last = src.last().expect("Non-empty document expected");
         assert!(last.kind == T::Eof);
         return TokenIter {
             index: 0,
-            tokens: &src[..],
+            tokens: src,
             eof_token: last,
         };
     }
@@ -294,9 +294,23 @@ impl<'a> PartialEq for Node<'a> {
 impl<'a> Debug for Node<'a> {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), FormatError> {
         match self {
-            &Scalar(_, _, ref a, _) => write!(fmt, "<Scalar {}>", a),
-            &ImplicitNull(_, _, _) => write!(fmt, "<Null>"),
-            _ => unimplemented!(),
+            Scalar(_, _, ref a, _) => write!(fmt, "<Scalar {}>", a),
+            ImplicitNull(_, _, _) => write!(fmt, "<Null>"),
+            Seq(_, _, seq, _) => {
+                let mut i = 0;
+                let n = seq.len();
+                write!(fmt, "<Sequence [")?;
+                for v in seq {
+                    write!(fmt, "{:?}", v)?;
+                    if i != 0 && i + 1 < n {
+                        write!(fmt, ", ")?;
+                    }
+                    i += 1;
+                }
+                write!(fmt, "]>")
+            },
+            Map(_, _, map, _) => write!(fmt, "<Map>"),
+            Alias(name, _, _) => write!(fmt, "<Alias {}>", name),
         }
     }
 }
@@ -703,7 +717,6 @@ fn _parse_node<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>)
     };
     if result.is_ok() && indent {
         let end = tokiter.peek(0);
-        dbg!(end);
         match end.kind {
             T::Unindent => {
                 tokiter.next();
@@ -765,19 +778,20 @@ fn parse_root<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>)
 }
 
 
-pub fn parse_tokens<'x>(tokens: &'x Vec<Token<'x>>)
+fn parse_tokens<'x>(tokiter: &'x mut TokenIter)
     -> Result<Document<'x>, Error>
 {
     let mut aliases = BTreeMap::new();
-    let mut iter = TokenIter::new(tokens);
-    let (directives, root) = match parse_root(&mut iter, &mut aliases) {
+    let (directives, root) = match parse_root(tokiter, &mut aliases) {
         Ok((directives, root)) => (directives, root),
         Err(e) => return Err(e),
     };
-    return Ok(Document {
-        directives: directives,
-        root: root,
-        });
+    return Ok(
+        Document {
+            directives: directives,
+            root: root,
+        }
+    );
 }
 
 /// Raw parser of the yaml to ast
@@ -788,21 +802,27 @@ pub fn parse<T, F>(name: Rc<String>, data: &str, process: F)
     where F: FnOnce(Document) -> T
 {
     let tokens = tokenize(name, data).map_err(Error::tokenizer_error)?;
-    let doc = match parse_tokens(&tokens) {
-        Ok(doc) => doc,
-        Err(e) => return Err(e),
-    };
+    let mut tokiter = TokenIter::new(&tokens[..]);
+    let doc = parse_tokens(&mut tokiter)?;
     return Ok(process(doc));
 }
 
-//pub fn parse_many<T>(name: Rc<String>, data: &str, process: F)
-//    -> Result<Vec<T>, Error>
-//    where F: Fn(Document) -> T
-//{
-//    let tokens = tokenize(name, data).map_err(Error::tokenizer_error)?;
-//    let doc = match parse_tokens(&tokens) {
-//        Ok(doc) => doc,
-//        Err(e) => return Err(e),
-//    };
-//    return Ok(process(doc));
-//}
+pub fn parse_all<O, F>(name: Rc<String>, data: &str, mut process: F)
+    -> Result<Vec<O>, Error>
+    where F: FnMut(Document) -> O
+{
+    let tokens = tokenize(name, data).map_err(Error::tokenizer_error)?;
+//    dbg!(tokens.iter().map(|t| t.kind).collect::<Vec<_>>());
+    let mut tokiter = TokenIter::new(&tokens[..]);
+    let mut result = vec!();
+    loop {
+        {
+            let doc = parse_tokens(&mut tokiter)?;
+            result.push(process(doc));
+        }
+        if tokiter.peek(0).kind == T::Eof {
+            break;
+        }
+    }
+    return Ok(result);
+}

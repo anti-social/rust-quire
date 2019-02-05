@@ -358,7 +358,7 @@ impl<'a, 'b> Tokenizer<'a, 'b> {
     }
 
     fn add_token(&mut self, kind: TokenType, start: Pos, end: Pos) {
-        if kind != Whitespace && kind != Comment && kind != DocumentStart &&
+        if kind != Whitespace && kind != Comment && //kind != DocumentStart &&
             self.flow_level == 0
         {
             // always have "0" at bottom of the stack so just unwrap it
@@ -863,6 +863,58 @@ fn test_list() {
     assert_eq!(simple_tokens(tokens),
         vec!((SequenceEntry, "-"), (Whitespace, " "),
              (Indent, ""), (SequenceEntry, "-"), (Unindent, "")));
+}
+
+#[test]
+fn test_multi_document() {
+    let empty_docs = "---
+---
+";
+    assert_eq!(
+        simple_tokens(test_tokenize(empty_docs)),
+        vec!(
+            (DocumentStart, "---"), (Whitespace, "\n"),
+            (DocumentStart, "---"), (Whitespace, "\n"),
+        )
+    );
+
+    let seq_docs = "---
+- 1
+---
+- 2
+";
+    assert_eq!(
+        simple_tokens(test_tokenize(seq_docs)),
+        vec!(
+            (DocumentStart, "---"), (Whitespace, "\n"),
+            (SequenceEntry, "-"), (Whitespace, " "),
+            (Indent, ""),
+            (PlainString, "1"), (Whitespace, "\n"),
+            (Unindent, ""),
+            (DocumentStart, "---"), (Whitespace, "\n"),
+            (SequenceEntry, "-"), (Whitespace, " "),
+            (Indent, ""),
+            (PlainString, "2"), (Whitespace, "\n"),
+            (Unindent, ""),
+        )
+    );
+
+    let map_docs = "---
+a: 1
+---
+a: 2
+";
+    assert_eq!(
+        simple_tokens(test_tokenize(map_docs)),
+        vec!(
+            (DocumentStart, "---"), (Whitespace, "\n"),
+            (PlainString, "a"), (MappingValue, ":"), (Whitespace, " "),
+                (PlainString, "1"), (Whitespace, "\n"),
+            (DocumentStart, "---"), (Whitespace, "\n"),
+            (PlainString, "a"), (MappingValue, ":"), (Whitespace, " "),
+                (PlainString, "2"), (Whitespace, "\n"),
+        )
+    );
 }
 
 #[test]

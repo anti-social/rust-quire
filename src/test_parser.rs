@@ -1,16 +1,17 @@
 use std::rc::Rc;
 
-use parser::parse;
+use parser::{parse, parse_all};
 use parser::{Document, Node};
 use tokenizer::Pos;
 
-const MULTI_SEQ: &str = "---
+const MULTI_SEQ: &'static str = "---
 - 1
+
 ---
 - 2
 ";
 
-const MULTI_MAP: &str = "---
+const MULTI_MAP: &'static str = "---
 a: 1
 ---
 b: 2
@@ -18,20 +19,33 @@ b: 2
 
 #[test]
 fn test_parse_multi_documents() {
-    let pos = Pos {
-        filename: Rc::new("<text>".to_string()),
-        indent: 0,
-        line: 0,
-        line_start: false,
-        line_offset: 0,
-        offset: 0,
-    };
-    assert_eq!(
-        parse(
-            Rc::new("<text>".to_string()),
-            MULTI_MAP,
-            |d| "ok".to_string()
-        ).unwrap(),
-        "ok".to_string(),
-    );
+    let mut doc_num = 0;
+    let res = parse_all(
+        Rc::new("<text>".to_string()),
+        MULTI_SEQ,
+        move |d| {
+            match doc_num {
+                0 => {
+                    assert_eq!(
+                        format!("{:?}", &d),
+                        "Document { directives: [], root: <Sequence [<Scalar 1>]> }"
+                    );
+                    ()
+                },
+                1 => {
+                    assert_eq!(
+                        format!("{:?}", &d),
+                        "Document { directives: [], root: <Sequence [<Scalar 2>]> }"
+                    );
+                    ()
+                },
+                _ => panic!("Too many documents"),
+            }
+            doc_num += 1;
+            ()
+        }
+    ).unwrap();
+    assert_eq!(res, vec![(), ()]);
+
+    assert!(false);
 }
