@@ -297,19 +297,25 @@ impl<'a> Debug for Node<'a> {
             Scalar(_, _, ref a, _) => write!(fmt, "<Scalar {}>", a),
             ImplicitNull(_, _, _) => write!(fmt, "<Null>"),
             Seq(_, _, seq, _) => {
-                let mut i = 0;
-                let n = seq.len();
                 write!(fmt, "<Sequence [")?;
-                for v in seq {
+                for (i, v) in seq.iter().enumerate() {
                     write!(fmt, "{:?}", v)?;
-                    if i != 0 && i + 1 < n {
+                    if i + 1 < seq.len() {
                         write!(fmt, ", ")?;
                     }
-                    i += 1;
                 }
                 write!(fmt, "]>")
             },
-            Map(_, _, map, _) => write!(fmt, "<Map>"),
+            Map(_, _, map, _) => {
+                write!(fmt, "<Map {{")?;
+                for (i, (k, v)) in map.iter().enumerate() {
+                    write!(fmt, "{:?}: {:?}", k, v)?;
+                    if i + 1 < map.len() {
+                        write!(fmt, ", ")?;
+                    }
+                }
+                write!(fmt, "}}>")
+            },
             Alias(name, _, _) => write!(fmt, "<Alias {}>", name),
         }
     }

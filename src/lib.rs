@@ -42,7 +42,7 @@ pub use sky::{parse_config, parse_string};
 pub use options::{Options, Include};
 pub use errors::{Error, ErrorList, ErrorCollector};
 pub use tokenizer::{Pos};
-pub use parser::{parse as raw_parse};
+pub use parser::{parse as raw_parse, parse_all as raw_parse_all};
 //pub use emit::{emit_ast, emit_object};
 
 mod chars;
