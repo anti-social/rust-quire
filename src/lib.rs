@@ -43,14 +43,14 @@ pub use options::{Options, Include};
 pub use errors::{Error, ErrorList, ErrorCollector};
 pub use tokenizer::{Pos};
 pub use parser::{parse as raw_parse, parse_all as raw_parse_all};
-//pub use emit::{emit_ast, emit_object};
+pub use emit::{emit_ast};
 
 mod chars;
 mod errors;
 mod tokenizer;
 mod options;
 mod parser;
-//mod emit;
+mod emit;
 mod de;
 mod sky;
 pub mod ast;

@@ -360,12 +360,12 @@ impl<'a> Context<'a> {
         return Ok(());
     }
 
-    fn to_buffer<'x, T: Encodable, W: Write>(
-        val: &T, wr: &'x mut W)
-    {
-        let mut encoder = Context::new(wr);
-        val.encode(&mut encoder).unwrap();
-    }
+//    fn to_buffer<'x, T: Encodable, W: Write>(
+//        val: &T, wr: &'x mut W)
+//    {
+//        let mut encoder = Context::new(wr);
+//        val.encode(&mut encoder).unwrap();
+//    }
 
 }
 
@@ -385,183 +385,183 @@ pub fn emit_ast(tree: &Ast, stream: &mut Write)
 }
 
 /// Emit encodable object in yaml form
-pub fn emit_object<'x, T: Deserialize>(
-    val: &T, wr: &'x mut Write) -> Result<(), IoError>
-{
-    let mut encoder = Context::new(wr);
-    val.encode(&mut encoder)
-}
+//pub fn emit_object<'x, T: Deserialize>(
+//    val: &T, wr: &'x mut Write) -> Result<(), IoError>
+//{
+//    let mut encoder = Context::new(wr);
+//    val.encode(&mut encoder)
+//}
 
 
-impl<'a> Deserializer for Context<'a> {
-    type Error = IoError;
-    fn emit_nil(&mut self) -> Result<(), IoError> {
-        return self.emit(Opcode::Null(None, None, Null::Nothing));
-    }
-    fn emit_usize(&mut self, v: usize) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_u64(&mut self, v: u64) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_u32(&mut self, v: u32) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_u16(&mut self, v: u16) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_u8(&mut self, v: u8) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_isize(&mut self, v: isize) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_i64(&mut self, v: i64) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_i32(&mut self, v: i32) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_i16(&mut self, v: i16) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_i8(&mut self, v: i8) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_bool(&mut self, v: bool) -> Result<(), IoError> {
-        return self.emit(Opcode::Scalar(None, None, Plain,
-            if v { "true" } else { "false" }));
-    }
-    fn emit_f64(&mut self, v: f64) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_f32(&mut self, v: f32) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, Plain, &val));
-    }
-    fn emit_char(&mut self, v: char) -> Result<(), IoError> {
-        let val = v.to_string();
-        return self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, &val));
-    }
-    fn emit_str(&mut self, v: &str) -> Result<(), IoError> {
-        return self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, v));
-    }
-    fn emit_enum<F>(&mut self, name: &str, f: F) -> Result<(), IoError> {
-        unimplemented!();
-    }
-    fn emit_enum_variant<F>(&mut self, v_name: &str, v_id: usize, len: usize, f: F)
-        -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_enum_variant_arg<F>(&mut self, a_idx: usize, f: F)
-        -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_enum_struct_variant<F>(&mut self, v_name: &str,
-        v_id: usize, len: usize, f: F)
-        -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_enum_struct_variant_field<F>(&mut self, f_name: &str, f_idx: usize,
-        f: F)
-        -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_struct<F>(&mut self, name: &str, len: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        self.emit(Opcode::MapStart(None, None))
-        .and(f(self))
-        .and(self.emit(Opcode::MapEnd))
-    }
-    fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, f_name))
-        .and(f(self))
-    }
-    fn emit_tuple<F>(&mut self, len: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_tuple_arg<F>(&mut self, idx: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_tuple_struct<F>(&mut self, name: &str, len: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_tuple_struct_arg<F>(&mut self, f_idx: usize, f: F)
-        -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_option<F>(&mut self, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_option_none(&mut self) -> Result<(), IoError> {
-        unimplemented!();
-    }
-    fn emit_option_some<F>(&mut self, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_seq<F>(&mut self, len: usize, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        self.emit(Opcode::SeqStart(None, None))
-            .and(f(self))
-            .and(self.emit(Opcode::SeqEnd))
-    }
-    fn emit_seq_elt<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        f(self)
-    }
-    fn emit_map<F>(&mut self, len: usize, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_map_elt_key<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-    fn emit_map_elt_val<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
-        where F: FnOnce(&mut Self) -> Result<(), IoError>
-    {
-        unimplemented!();
-    }
-}
+//impl<'a> Deserializer for Context<'a> {
+//    type Error = IoError;
+//    fn emit_nil(&mut self) -> Result<(), IoError> {
+//        return self.emit(Opcode::Null(None, None, Null::Nothing));
+//    }
+//    fn emit_usize(&mut self, v: usize) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_u64(&mut self, v: u64) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_u32(&mut self, v: u32) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_u16(&mut self, v: u16) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_u8(&mut self, v: u8) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_isize(&mut self, v: isize) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_i64(&mut self, v: i64) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_i32(&mut self, v: i32) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_i16(&mut self, v: i16) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_i8(&mut self, v: i8) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_bool(&mut self, v: bool) -> Result<(), IoError> {
+//        return self.emit(Opcode::Scalar(None, None, Plain,
+//            if v { "true" } else { "false" }));
+//    }
+//    fn emit_f64(&mut self, v: f64) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_f32(&mut self, v: f32) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, Plain, &val));
+//    }
+//    fn emit_char(&mut self, v: char) -> Result<(), IoError> {
+//        let val = v.to_string();
+//        return self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, &val));
+//    }
+//    fn emit_str(&mut self, v: &str) -> Result<(), IoError> {
+//        return self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, v));
+//    }
+//    fn emit_enum<F>(&mut self, name: &str, f: F) -> Result<(), IoError> {
+//        unimplemented!();
+//    }
+//    fn emit_enum_variant<F>(&mut self, v_name: &str, v_id: usize, len: usize, f: F)
+//        -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_enum_variant_arg<F>(&mut self, a_idx: usize, f: F)
+//        -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_enum_struct_variant<F>(&mut self, v_name: &str,
+//        v_id: usize, len: usize, f: F)
+//        -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_enum_struct_variant_field<F>(&mut self, f_name: &str, f_idx: usize,
+//        f: F)
+//        -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_struct<F>(&mut self, name: &str, len: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        self.emit(Opcode::MapStart(None, None))
+//        .and(f(self))
+//        .and(self.emit(Opcode::MapEnd))
+//    }
+//    fn emit_struct_field<F>(&mut self, f_name: &str, f_idx: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        self.emit(Opcode::Scalar(None, None, ScalarStyle::Auto, f_name))
+//        .and(f(self))
+//    }
+//    fn emit_tuple<F>(&mut self, len: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_tuple_arg<F>(&mut self, idx: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_tuple_struct<F>(&mut self, name: &str, len: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_tuple_struct_arg<F>(&mut self, f_idx: usize, f: F)
+//        -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_option<F>(&mut self, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_option_none(&mut self) -> Result<(), IoError> {
+//        unimplemented!();
+//    }
+//    fn emit_option_some<F>(&mut self, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_seq<F>(&mut self, len: usize, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        self.emit(Opcode::SeqStart(None, None))
+//            .and(f(self))
+//            .and(self.emit(Opcode::SeqEnd))
+//    }
+//    fn emit_seq_elt<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        f(self)
+//    }
+//    fn emit_map<F>(&mut self, len: usize, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_map_elt_key<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//    fn emit_map_elt_val<F>(&mut self, idx: usize, f: F) -> Result<(), IoError>
+//        where F: FnOnce(&mut Self) -> Result<(), IoError>
+//    {
+//        unimplemented!();
+//    }
+//}
 
 #[cfg(test)]
 mod test {
@@ -743,36 +743,36 @@ mod test {
     }
 
 
-    #[test]
-    fn encode_int() {
-        let mut bytes = Vec::new();
-        Context::to_buffer(&1usize, &mut bytes);
-        let value = from_utf8(&bytes[..]).unwrap();
-        assert_eq!(value, "1\n");
-    }
-
-    #[test]
-    fn encode_seq() {
-        let mut bytes = Vec::new();
-        Context::to_buffer(&vec!(1usize, 2usize), &mut bytes);
-        let value = from_utf8(&bytes[..]).unwrap();
-        assert_eq!(value, "- 1\n- 2\n");
-    }
-
-    #[derive(RustcEncodable)]
-    struct Something {
-        key1: isize,
-        key2: String,
-    }
-
-    #[test]
-    fn encode_struct() {
-        let mut bytes = Vec::new();
-        Context::to_buffer(&Something{
-            key1: -123,
-            key2: "hello".to_string(),
-            }, &mut bytes);
-        let value = from_utf8(&bytes[..]).unwrap();
-        assert_eq!(value, "key1: -123\nkey2: hello\n");
-    }
+//    #[test]
+//    fn encode_int() {
+//        let mut bytes = Vec::new();
+//        Context::to_buffer(&1usize, &mut bytes);
+//        let value = from_utf8(&bytes[..]).unwrap();
+//        assert_eq!(value, "1\n");
+//    }
+//
+//    #[test]
+//    fn encode_seq() {
+//        let mut bytes = Vec::new();
+//        Context::to_buffer(&vec!(1usize, 2usize), &mut bytes);
+//        let value = from_utf8(&bytes[..]).unwrap();
+//        assert_eq!(value, "- 1\n- 2\n");
+//    }
+//
+//    #[derive(RustcEncodable)]
+//    struct Something {
+//        key1: isize,
+//        key2: String,
+//    }
+//
+//    #[test]
+//    fn encode_struct() {
+//        let mut bytes = Vec::new();
+//        Context::to_buffer(&Something{
+//            key1: -123,
+//            key2: "hello".to_string(),
+//            }, &mut bytes);
+//        let value = from_utf8(&bytes[..]).unwrap();
+//        assert_eq!(value, "key1: -123\nkey2: hello\n");
+//    }
 }
