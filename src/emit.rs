@@ -83,6 +83,35 @@ fn tag_as_string<'x>(tag: &'x AstTag) -> Option<&'x str> {
     }).map(|t| &t[..]);
 }
 
+enum EscapedState {
+    Backslash(char),
+    Char(char),
+    Done,
+}
+
+struct Escaped {
+    state: EscapedState,
+}
+
+impl Iterator for Escaped {
+    type Item = char;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        use self::EscapedState::*;
+
+        match self.state {
+            Backslash(c) => {
+                self.state = Char(c);
+                Some('\\')
+            },
+            Char(c) => {
+                self.state = Done;
+                Some(c)
+            },
+            Done => None,
+        }
+    }
+}
 
 impl<'a> Context<'a> {
     pub fn new<'x>(stream: &'x mut Write) -> Context<'x> {
@@ -95,6 +124,20 @@ impl<'a> Context<'a> {
         };
     }
 
+    fn escape_char(&self, c: char) -> Escaped {
+        use self::EscapedState::*;
+
+        let escaped_state = match c {
+            '\0' => Backslash('0'),
+            '\t' => Backslash('t'),
+            '\r' => Backslash('r'),
+            '\n' => Backslash('n'),
+            '\\' | '"' => Backslash(c),
+            _ => Char(c)
+        };
+        Escaped { state: escaped_state }
+    }
+
     fn emit_scalar(&mut self, style: ScalarStyle, value: &str)
         -> IoResult<()>
     {
@@ -102,7 +145,19 @@ impl<'a> Context<'a> {
             ScalarStyle::Auto|ScalarStyle::Plain => {
                 //  Check for allowed characters
                 self.line = L::AfterScalar;
-                return self.stream.write(&value[..].as_bytes()).map(|_| ());
+                // Double-quote style is the only style capable of expressing
+                // arbitrary strings
+                let mut escaped_value = String::new();
+                for ch in value.chars() {
+                    for c in self.escape_char(ch) {
+                        escaped_value.push(c);
+                    }
+                }
+                if escaped_value.len() != value.len() {
+                    write!(self.stream, r#""{}""#, escaped_value)
+                } else {
+                    self.stream.write(&value[..].as_bytes()).map(|_| ())
+                }
             }
             ScalarStyle::SingleQuoted => {
                 unimplemented!();
@@ -600,6 +655,13 @@ mod test {
         emit_and_compare(&[
             Opcode::Scalar(None, None, ScalarStyle::Auto, "hello"),
         ], "hello\n");
+    }
+
+    #[test]
+    fn test_scalar_escaping() {
+        emit_and_compare(&[
+            Opcode::Scalar(None, None, ScalarStyle::Auto, "hello\n\"world\""),
+        ], "\"hello\\n\\\"world\\\"\"\n");
     }
 
     #[test]
