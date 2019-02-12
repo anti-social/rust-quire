@@ -20,7 +20,7 @@ use super::ast::NullKind::{Explicit, Implicit};
 pub type Tag<'a> = &'a str;
 pub type Anchor<'a> = &'a str;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum ScalarStyle {
     Auto,
     Plain,
@@ -30,14 +30,14 @@ enum ScalarStyle {
     Folded,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum Null {
     Nothing,
     Tilde,
     Null,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum State {
     New,
     MapKey,
@@ -54,7 +54,7 @@ enum Line {
     AfterScalar,  // Means, insert newline unless you emitting comment
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum Opcode<'a> {
     MapStart(Option<Tag<'a>>, Option<Anchor<'a>>),
     MapEnd,
@@ -324,6 +324,12 @@ impl<'a> Context<'a> {
                 self.emit_tag_anchor(tag, anchor, true)?;
                 self.emit_scalar(style, value)?;
                 S::SeqItem }
+            (S::SeqItem, Opcode::Null(tag, anchor, style)) => {
+                self.ensure_indented()?;
+                self.stream.write(b"- ")?;
+                self.emit_tag_anchor(tag, anchor, false)?;
+                self.emit_null(false, style)?;
+                S::SeqItem }
             (S::SeqItem, Opcode::MapStart(tag, anchor)) => {
                 self.emit_tag_anchor(tag, anchor, false)?;
                 if tag.is_some() || anchor.is_some() {
@@ -334,6 +340,15 @@ impl<'a> Context<'a> {
                 self.line = L::AfterIndent;
                 self.push_indent(S::SeqItem, 2);
                 S::MapKey }
+            (S::SeqItem, Opcode::SeqStart(tag, anchor)) => {
+                self.emit_tag_anchor(tag, anchor, false)?;
+                if tag.is_some() || anchor.is_some() {
+                    self.ensure_line_start()?;
+                }
+                self.ensure_indented()?;
+                self.line = L::AfterIndent;
+                self.push_indent(S::SeqItem, 2);
+                S::SeqItem }
             (S::SeqItem, Opcode::SeqEnd) => {
                 let nstate = self.pop_indent();
                 match nstate {
@@ -341,7 +356,10 @@ impl<'a> Context<'a> {
                     _ => {}
                 }
                 nstate }
-            (_, _) => unimplemented!(),
+            (s, o) => {
+                dbg!((s, o));
+                unimplemented!()
+            },
         };
         return Ok(());
     }
