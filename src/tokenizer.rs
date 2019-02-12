@@ -866,6 +866,19 @@ fn test_list() {
 }
 
 #[test]
+fn test_list_with_implicit_null() {
+    assert_eq!(
+        simple_tokens(test_tokenize("a:\n-\nb:\n-")),
+        vec!(
+            (PlainString, "a"), (MappingValue, ":"), (Whitespace, "\n"),
+            (SequenceEntry, "-"), (Whitespace, "\n"),
+            (PlainString, "b"), (MappingValue, ":"), (Whitespace, "\n"),
+            (SequenceEntry, "-"),
+        )
+    );
+}
+
+#[test]
 fn test_multi_document() {
     let empty_docs = "---
 ---

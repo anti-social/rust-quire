@@ -28,6 +28,14 @@ fn assert_yaml_eq_json(a: &'static str, b: &'static str) {
 }
 
 #[test]
+fn test_list_entry_with_implicit_null() {
+    assert_yaml_eq_json(
+        "a:\n-\nb:\n-",
+        r#"{"a": [null], "b": [null]}"#
+    );
+}
+
+#[test]
 fn test_to_json_1() {
     assert_yaml_eq_json("1", r#""1""#);
 }

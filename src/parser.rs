@@ -337,7 +337,10 @@ fn parse_list<'x>(tokiter: &mut TokenIter<'x>, aliases: &mut Aliases<'x>,
         tokiter.next().unwrap();
         let tok = tokiter.peek(0);
         match tok.kind {
-            T::SequenceEntry if tok.start.indent == marker.start.indent => {
+            T::SequenceEntry
+            | T::PlainString | T::SingleString | T::DoubleString
+            | T::Literal | T::Folded
+            if tok.start.indent == marker.start.indent => {
                 children.push(ImplicitNull(None, None, marker.end.clone()));
             }
             T::DocumentEnd | T::Eof | T::Unindent => {
